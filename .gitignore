@@ -1,0 +1,53 @@
+# Dependencias
+node_modules/
+
+# Build
+dist/
+dist-ssr/
+build/
+
+# Variables de entorno
+.env
+.env.*
+*.env
+!.env.example
+
+# TypeScript
+*.tsbuildinfo
+
+# Vite
+.vite/
+
+# Cobertura de tests
+coverage/
+.nyc_output/
+
+# Logs
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+lerna-debug.log*
+
+# Editores e IDEs
+.vscode/*
+!.vscode/extensions.json
+.idea/
+*.suo
+*.ntvs*
+*.njsproj
+*.sln
+*.sw?
+
+# Claude Code y skills
+.claude/
+.agents/
+
+# macOS
+.DS_Store
+.AppleDouble
+.LSOverride
+
+# Linux
+*~
