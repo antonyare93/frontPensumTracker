@@ -1,22 +1,25 @@
-import { useState } from 'react'
+import { useState } from "react";
 
 interface Props {
-  onSubmit: (username: string, password: string) => void
-  loading: boolean
+  onSubmit: (username: string, password: string) => void;
+  loading: boolean;
 }
 
 export function CookieInput({ onSubmit, loading }: Props) {
-  const [username, setUsername] = useState('')
-  const [password, setPassword] = useState('')
+  const [username, setUsername] = useState("");
+  const [password, setPassword] = useState("");
 
   function handleSubmit(e: React.FormEvent) {
-    e.preventDefault()
-    onSubmit(username, password)
+    e.preventDefault();
+    onSubmit(username, password);
   }
 
   return (
     <div className="max-w-sm mx-auto p-8">
-      <h1 className="text-2xl font-semibold mb-1">Pensum Tracker</h1>
+      <h1 className="text-2xl text-center font-semibold mb-1">Cursum Pro</h1>
+      <p className="text-muted-foreground text-center text-sm mb-6">
+        Hecho por estudiantes, para estudiantes.
+      </p>
       <p className="text-muted-foreground text-sm mb-6">
         Ingresa con tus credenciales del portal universitario.
       </p>
@@ -28,7 +31,7 @@ export function CookieInput({ onSubmit, loading }: Props) {
             type="text"
             autoComplete="username"
             value={username}
-            onChange={e => setUsername(e.target.value)}
+            onChange={(e) => setUsername(e.target.value)}
             disabled={loading}
             placeholder="tu.usuario"
             className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-ring"
@@ -41,7 +44,7 @@ export function CookieInput({ onSubmit, loading }: Props) {
             type="password"
             autoComplete="current-password"
             value={password}
-            onChange={e => setPassword(e.target.value)}
+            onChange={(e) => setPassword(e.target.value)}
             disabled={loading}
             className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-ring"
           />
@@ -52,9 +55,20 @@ export function CookieInput({ onSubmit, loading }: Props) {
           disabled={loading || !username.trim() || !password.trim()}
           className="w-full rounded-md bg-primary text-primary-foreground px-4 py-2 text-sm font-medium disabled:opacity-50"
         >
-          {loading ? 'Cargando pensum...' : 'Ver mi pensum'}
+          {loading ? "Cargando pensum..." : "Ver mi pensum"}
         </button>
       </form>
+      <p className="text-muted-foreground text-sm mb-6">
+        Esta app no almacena tu información personal. Los datos son procesados y
+        deshechados al instante para mostrarte tu pensum. Si tienes dudas o
+        quieres reportar alguna novedad, contáctanos en{" "}
+        <a
+          href="mailto:antony.arevalo@udea.edu.co"
+          className="underline hover:text-foreground"
+        >
+          antony.arevalo@udea.edu.co
+        </a>
+      </p>
     </div>
-  )
+  );
 }
