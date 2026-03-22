@@ -6,6 +6,7 @@ export interface Subject {
   credits: number
   semester: number | null
   obligatoria: boolean
+  elective_bank: string | null
   prerequisites: string[]
   corequisites: string[]
   cursada: boolean
