@@ -1,39 +1,77 @@
-import { useState, useRef } from 'react'
+import { useState, useRef, useCallback } from 'react'
 import type { AcademicRecord } from '@/types/academic'
-import { loginAndFetch } from '@/services/api'
+import { streamLoginAndFetch, type StreamEvent } from '@/services/api'
 
-type State =
-  | { status: 'idle' }
-  | { status: 'loading' }
-  | { status: 'error'; message: string }
+type Status = 'idle' | 'loading' | 'error'
+
+export type PartialRecord = Partial<AcademicRecord>
+
+function mergeStage(prev: PartialRecord | null, event: StreamEvent): PartialRecord {
+  const base = prev ?? {}
+  switch (event.stage) {
+    case 'student_info':
+    case 'program_info':
+    case 'record':
+      return { ...base, ...event.data }
+    case 'pensum':
+      if (base.completed_credits !== undefined) return base
+      return { ...base, subjects: event.data.subjects }
+    default:
+      return base
+  }
+}
 
 export function useAcademicRecord() {
-  const [state, setState] = useState<State>({ status: 'idle' })
-  const [record, setRecord] = useState<AcademicRecord | null>(null)
+  const [status, setStatus] = useState<Status>('idle')
+  const [error, setError] = useState<string | null>(null)
+  const [data, setData] = useState<PartialRecord | null>(null)
   const credsRef = useRef<{ username: string; password: string } | null>(null)
 
-  async function load(username: string, password: string, pensumVersion = 0) {
-    credsRef.current = { username, password }
-    setState({ status: 'loading' })
-    try {
-      const newRecord = await loginAndFetch(username, password, pensumVersion)
-      setRecord(newRecord)
-      setState({ status: 'idle' })
-    } catch (err) {
-      setState({ status: 'error', message: err instanceof Error ? err.message : 'Error desconocido' })
-    }
-  }
+  const run = useCallback(
+    async (username: string, password: string, pensumVersion: number, keepData: boolean) => {
+      credsRef.current = { username, password }
+      setStatus('loading')
+      setError(null)
+      if (!keepData) setData(null)
 
-  async function changeVersion(version: number) {
-    if (!credsRef.current) return
-    await load(credsRef.current.username, credsRef.current.password, version)
-  }
+      try {
+        await streamLoginAndFetch(username, password, pensumVersion, event => {
+          if (event.stage === 'error') {
+            setError(event.detail)
+            setStatus('error')
+            return
+          }
+          setData(prev => mergeStage(prev, event))
+        })
+        setStatus(prev => (prev === 'error' ? prev : 'idle'))
+      } catch (err) {
+        setError(err instanceof Error ? err.message : 'Error desconocido')
+        setStatus('error')
+      }
+    },
+    [],
+  )
 
-  function reset() {
+  const load = useCallback(
+    (username: string, password: string, pensumVersion = 0) =>
+      run(username, password, pensumVersion, false),
+    [run],
+  )
+
+  const changeVersion = useCallback(
+    async (version: number) => {
+      if (!credsRef.current) return
+      await run(credsRef.current.username, credsRef.current.password, version, true)
+    },
+    [run],
+  )
+
+  const reset = useCallback(() => {
     credsRef.current = null
-    setRecord(null)
-    setState({ status: 'idle' })
-  }
+    setData(null)
+    setError(null)
+    setStatus('idle')
+  }, [])
 
-  return { state, record, load, reset, changeVersion }
+  return { status, error, data, load, reset, changeVersion }
 }

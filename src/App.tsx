@@ -3,10 +3,17 @@ import { CookieInput } from '@/components/CookieInput'
 import { Dashboard } from '@/components/Dashboard'
 
 export default function App() {
-  const { state, record, load, reset, changeVersion } = useAcademicRecord()
+  const { status, error, data, load, reset, changeVersion } = useAcademicRecord()
 
-  if (record) {
-    return <Dashboard record={record} onReset={reset} onChangeVersion={changeVersion} />
+  if (data) {
+    return (
+      <Dashboard
+        data={data}
+        error={status === 'error' ? error : null}
+        onReset={reset}
+        onChangeVersion={changeVersion}
+      />
+    )
   }
 
   return (
@@ -14,10 +21,10 @@ export default function App() {
       <div className="w-full">
         <CookieInput
           onSubmit={load}
-          loading={state.status === 'loading'}
+          loading={status === 'loading'}
         />
-        {state.status === 'error' ? (
-          <p className="text-destructive text-sm text-center mt-2">{state.message}</p>
+        {status === 'error' && error ? (
+          <p className="text-destructive text-sm text-center mt-2">{error}</p>
         ) : null}
       </div>
     </div>
