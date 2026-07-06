@@ -7,6 +7,7 @@ const statusStyles: Record<Subject['status'], string> = {
   in_progress: 'bg-blue-100 border-blue-300 text-blue-900',
   available: 'bg-amber-100 border-amber-300 text-amber-900',
   locked: 'bg-gray-100 border-gray-200 text-gray-400',
+  not_needed: 'bg-gray-50 border-gray-200 text-gray-400 border-dashed',
 }
 
 interface Props {

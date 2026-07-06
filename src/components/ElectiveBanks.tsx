@@ -8,6 +8,7 @@ const statusStyles: Record<Subject['status'], string> = {
   in_progress: 'bg-blue-100 text-blue-800',
   available: 'bg-amber-100 text-amber-800',
   locked: 'bg-gray-100 text-gray-500',
+  not_needed: 'bg-gray-50 text-gray-400',
 }
 
 const statusLabel: Record<Subject['status'], string> = {
@@ -15,6 +16,7 @@ const statusLabel: Record<Subject['status'], string> = {
   in_progress: 'En curso',
   available: 'Disponible',
   locked: 'Bloqueada',
+  not_needed: 'No requerida',
 }
 
 interface BankItemProps {

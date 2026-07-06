@@ -95,13 +95,33 @@ export function Dashboard({ data, error, onReset, onChangeVersion }: Props) {
         </div>
       ) : null}
 
+      {data.graduated ? (
+        <div className="mb-6 rounded-lg border border-emerald-300 bg-emerald-50 px-4 py-3 text-center text-emerald-800">
+          Completaste todos los créditos del plan. No tienes materias pendientes para el grado.
+        </div>
+      ) : null}
+
       <div className="max-w-xs mx-auto mb-8">
         {isComplete ? (
-          <ProgressGauge
-            completed={data.completed_credits!}
-            inProgress={data.in_progress_credits!}
-            total={data.total_credits!}
-          />
+          <>
+            <ProgressGauge
+              completed={data.progress_credits!}
+              inProgress={data.in_progress_credits!}
+              total={data.total_credits!}
+            />
+            <div className="text-center text-sm text-gray-500 mt-1">
+              {data.progress_credits} / {data.total_credits} créditos para el grado
+              {data.in_progress_credits! > 0 ? (
+                <span className="text-blue-500"> · {data.in_progress_credits} en curso</span>
+              ) : null}
+            </div>
+            {data.completed_credits! > data.total_credits! ? (
+              <div className="text-center text-xs text-emerald-600 mt-1">
+                Has cursado {data.completed_credits} créditos en total
+                ({data.completed_credits! - data.total_credits!} adicionales al plan)
+              </div>
+            ) : null}
+          </>
         ) : (
           <GaugeSkeleton />
         )}
