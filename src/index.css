@@ -25,6 +25,9 @@
   * {
     border-color: theme(--color-border);
   }
+  html {
+    touch-action: manipulation;
+  }
   body {
     background-color: theme(--color-background);
     color: theme(--color-foreground);

@@ -29,9 +29,9 @@ export function PensumGridSkeleton() {
           <Skeleton key={i} className="h-4 w-20" />
         ))}
       </div>
-      <div className="flex gap-3">
+      <div className="grid grid-cols-2 gap-3 md:grid-cols-4 lg:grid-cols-6">
         {Array.from({ length: 6 }).map((_, col) => (
-          <div key={col} className="w-[160px] shrink-0">
+          <div key={col} className="min-w-0">
             <Skeleton className="mx-auto mb-2 h-3 w-12" />
             <div className="flex flex-col gap-2">
               {Array.from({ length: 5 }).map((_, row) => (

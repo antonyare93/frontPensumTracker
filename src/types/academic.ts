@@ -28,6 +28,7 @@ export interface AcademicRecord {
   program_code: string
   pensum_version: number
   version_actual: number
+  enrolled_version: number | null
   versiones: number[]
   total_credits: number
   completed_credits: number

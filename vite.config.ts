@@ -10,4 +10,15 @@ export default defineConfig({
       '@': path.resolve(__dirname, './src'),
     },
   },
+  server: {
+    // Permite servir el dev server detrás de túneles (cloudflared, etc.).
+    allowedHosts: true,
+    // Proxy del API al backend para compartir todo con un solo túnel.
+    proxy: {
+      '/api': {
+        target: 'http://localhost:8000',
+        changeOrigin: true,
+      },
+    },
+  },
 })

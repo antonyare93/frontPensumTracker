@@ -40,9 +40,9 @@ function BankItem({ bank, subjects }: BankItemProps) {
   return (
     <div className="border border-gray-200 rounded-lg overflow-hidden">
       <div className="px-4 py-3 bg-gray-50">
-        <div className="flex items-center justify-between mb-2">
-          <h3 className="text-sm font-semibold text-gray-800">{bank.name}</h3>
-          <span className="text-xs text-gray-500">
+        <div className="mb-2 flex flex-col gap-1 sm:flex-row sm:items-center sm:justify-between">
+          <h3 className="text-sm font-semibold text-foreground">{bank.name}</h3>
+          <span className="text-xs tabular-nums text-muted-foreground">
             {bank.credits_approved} / {bank.credits_required} créditos
           </span>
         </div>
@@ -56,7 +56,7 @@ function BankItem({ bank, subjects }: BankItemProps) {
 
       <button
         onClick={() => setOpen(o => !o)}
-        className="w-full flex items-center gap-1 px-4 py-2 text-xs text-gray-600 hover:bg-gray-50 transition-colors"
+        className="flex min-h-11 w-full cursor-pointer items-center gap-1 px-4 text-sm text-muted-foreground transition-colors duration-200 hover:bg-accent hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-inset"
       >
         {open ? <ChevronDown size={14} /> : <ChevronRight size={14} />}
         {open ? 'Ocultar materias' : `Ver ${bank.subject_codes.length} materias`}

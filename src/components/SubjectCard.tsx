@@ -27,7 +27,7 @@ export const SubjectCard = memo(function SubjectCard({
     <div
       onClick={() => onClick?.(s.code)}
       className={cn(
-        'w-[160px] h-[88px] rounded-lg border p-2 text-xs flex flex-col justify-between',
+        'w-full min-h-[88px] rounded-lg border p-2 text-xs flex flex-col justify-between',
         onClick ? 'cursor-pointer transition-shadow hover:shadow-md' : '',
         statusStyles[s.status],
         isSelected && 'ring-2 ring-offset-1 ring-gray-800',
