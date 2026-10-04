@@ -25,6 +25,19 @@ describe('Dashboard', () => {
     ).toBeInTheDocument()
   })
 
+  it('no cuenta como adicionales las obligatorias que todavía faltan', () => {
+    renderDashboard({
+      ...record,
+      progress_credits: 163,
+      total_credits: 168,
+      completed_credits: 180,
+    })
+
+    expect(
+      screen.getByText('Has cursado 180 créditos en total (17 adicionales al plan)'),
+    ).toBeInTheDocument()
+  })
+
   it('no muestra ese aviso cuando lo cursado no supera el plan', () => {
     renderDashboard({ ...record, completed_credits: 35, progress_credits: 35 })
 
