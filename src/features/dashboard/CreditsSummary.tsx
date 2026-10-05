@@ -11,7 +11,7 @@ interface Props {
 }
 
 export function CreditsSummary({ towardDegree, inProgress, total, takenTotal }: Props) {
-  const extra = extraCredits(takenTotal, total)
+  const extra = extraCredits(takenTotal, towardDegree)
   const remaining = remainingCredits(towardDegree, inProgress, total)
 
   return (
