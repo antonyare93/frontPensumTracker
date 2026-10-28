@@ -83,10 +83,11 @@ describe('App', () => {
       'MAT301',
     ])
 
-    // Bancos de electivas, en el orden que los entrega el backend.
+    // Materia en curso de la calculadora de notas y bancos de electivas, en el
+    // orden que los entrega el backend.
     expect(
       screen.getAllByRole('heading', { level: 3 }).map(heading => heading.textContent),
-    ).toEqual(['Electivas profesionales', 'Formación complementaria'])
+    ).toEqual(['Cálculo II', 'Electivas profesionales', 'Formación complementaria'])
     expect(screen.getByText('3 / 6 créditos')).toBeInTheDocument()
     expect(screen.getByText('2 / 2 créditos')).toBeInTheDocument()
   })
@@ -142,7 +143,8 @@ describe('App', () => {
 
     expect(await screen.findByLabelText('Progreso: 34% aprobado')).toBeInTheDocument()
     expect(screen.getByText('Ingeniería de Sistemas')).toBeInTheDocument()
-    expect(screen.getByText('Cálculo II')).toBeInTheDocument()
+    // En el pensum y en la calculadora de notas, porque está en curso.
+    expect(screen.getAllByText('Cálculo II')).toHaveLength(2)
   })
 
   it('vuelve al login al cerrar sesión', async () => {

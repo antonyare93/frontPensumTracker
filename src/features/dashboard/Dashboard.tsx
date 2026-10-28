@@ -1,6 +1,7 @@
 import type { PartialRecord } from '@/domain/academic-record'
 import { Alert } from '@/components/ui/Alert'
 import { Collapsible } from '@/components/ui/Collapsible'
+import { GradeCalculator } from '@/features/grades/GradeCalculator'
 import { AvailableSubjects } from '@/features/pensum/AvailableSubjects'
 import { ElectiveBanks } from '@/features/pensum/ElectiveBanks'
 import { PensumGrid } from '@/features/pensum/PensumGrid'
@@ -75,6 +76,10 @@ export function Dashboard({ data, error, onReset, onChangeVersion }: Props) {
           </>
         )}
       </section>
+
+      <Collapsible title="Notas del semestre">
+        {isComplete ? <GradeCalculator subjects={data.subjects!} /> : <TableSkeleton rows={2} />}
+      </Collapsible>
 
       <Collapsible title="Materias disponibles">
         {isComplete ? <AvailableSubjects subjects={data.subjects!} /> : <TableSkeleton />}
