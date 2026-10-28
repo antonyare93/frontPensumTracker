@@ -23,6 +23,14 @@ describe('ElectiveBanks', () => {
     expect(barWidths(container)).toEqual(['0%'])
   })
 
+  it('sin cupo conocido muestra solo lo aprobado y no pinta barra', () => {
+    const bank = { name: 'Sociohumanísticas', credits_required: null, credits_approved: 4, subject_codes: [] }
+    const { container } = render(<ElectiveBanks banks={[bank]} subjects={subjects} />)
+
+    expect(screen.getByText('4 créditos aprobados · mínimo no disponible')).toBeInTheDocument()
+    expect(barWidths(container)).toEqual([])
+  })
+
   it('pinta el estado de cada materia del banco con su etiqueta y sus colores', async () => {
     render(<ElectiveBanks banks={record.elective_banks} subjects={subjects} />)
     const user = userEvent.setup()
