@@ -1,12 +1,13 @@
 import { useState } from 'react'
 import { Plus, X } from 'lucide-react'
-import type { Subject } from '@/types/academic'
+import type { EnrolledOutsidePensum, Subject } from '@/types/academic'
 import { gradeSummary, MAX_GRADE, MIN_GRADE, type GradeEntry, type GradeSummary } from '@/domain/grades'
 import { Button } from '@/components/ui/Button'
 import { Input } from '@/components/ui/Input'
 
 interface Props {
   subjects: Subject[]
+  outsidePensum?: EnrolledOutsidePensum[]
 }
 
 // Lo que el estudiante escribe, tal cual, para no perder una coma a medio teclear.
@@ -60,8 +61,24 @@ function outcomeMessage(summary: GradeSummary): { text: string; className: strin
   }
 }
 
+// Lo que la tarjeta necesita de una materia. Las que no están en el pensum no
+// traen créditos.
+interface CurrentSubject {
+  code: string
+  name: string
+  credits: number | null
+}
+
+function fromPensum(subject: Subject): CurrentSubject {
+  return { code: subject.code, name: subject.name, credits: subject.credits }
+}
+
+function fromOutside(subject: EnrolledOutsidePensum): CurrentSubject {
+  return { code: subject.code, name: subject.name ?? `Materia ${subject.code}`, credits: null }
+}
+
 interface CardProps {
-  subject: Subject
+  subject: CurrentSubject
 }
 
 function SubjectGrades({ subject }: CardProps) {
@@ -75,11 +92,14 @@ function SubjectGrades({ subject }: CardProps) {
   const removeRow = (index: number) => setRows(prev => prev.filter((_, i) => i !== index))
 
   return (
-    <li className="rounded-lg border border-border p-4">
-      <div className="mb-3 flex items-baseline justify-between gap-3">
+    <li className="min-w-0 rounded-lg border border-border p-4">
+      {/* Envuelve para que la etiqueta larga baje de línea en vez de desbordar en móvil. */}
+      <div className="mb-3 flex flex-wrap items-baseline justify-between gap-x-3 gap-y-1">
         <h3 className="text-sm font-semibold text-foreground">{subject.name}</h3>
-        <span className="shrink-0 text-xs text-muted-foreground">
-          {subject.code} · {subject.credits} créditos
+        <span className="text-xs text-muted-foreground">
+          {subject.credits === null
+            ? 'No está en el pensum de esta versión'
+            : `${subject.code} · ${subject.credits} créditos`}
         </span>
       </div>
 
@@ -136,8 +156,11 @@ function SubjectGrades({ subject }: CardProps) {
 
 // Calculadora de notas de las materias en curso. Las notas solo viven en la
 // pestaña: no se envían ni se guardan, igual que el resto del expediente.
-export function GradeCalculator({ subjects }: Props) {
-  const current = subjects.filter(s => s.cursando)
+export function GradeCalculator({ subjects, outsidePensum = [] }: Props) {
+  const current = [
+    ...subjects.filter(s => s.cursando).map(fromPensum),
+    ...outsidePensum.map(fromOutside),
+  ]
 
   if (current.length === 0) {
     return <p className="text-sm text-muted-foreground">No tienes materias matriculadas este semestre.</p>

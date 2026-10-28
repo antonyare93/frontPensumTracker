@@ -49,6 +49,30 @@ describe('GradeCalculator', () => {
     expect(screen.queryByLabelText('Nota 2 de Cálculo I')).not.toBeInTheDocument()
   })
 
+  it('incluye las matriculadas que no están en el pensum, con o sin nombre', async () => {
+    const outside = [
+      { code: '3001234', name: 'CURSO LIBRE' },
+      { code: '3009999', name: null },
+    ]
+    render(<GradeCalculator subjects={[calculo]} outsidePensum={outside} />)
+    const user = userEvent.setup()
+
+    expect(screen.getByText('CURSO LIBRE')).toBeInTheDocument()
+    expect(screen.getByText('Materia 3009999')).toBeInTheDocument()
+    expect(screen.getAllByText('No está en el pensum de esta versión')).toHaveLength(2)
+
+    await user.type(screen.getByLabelText('Nota 1 de CURSO LIBRE'), '5')
+    await user.type(screen.getByLabelText('Porcentaje 1 de CURSO LIBRE'), '100')
+    expect(screen.getByText('Aprobada')).toBeInTheDocument()
+  })
+
+  it('con solo matriculadas fuera del pensum no dice que no hay materias', () => {
+    render(<GradeCalculator subjects={[]} outsidePensum={[{ code: '3001234', name: 'CURSO LIBRE' }]} />)
+
+    expect(screen.queryByText(/No tienes materias matriculadas/)).not.toBeInTheDocument()
+    expect(screen.getByText('CURSO LIBRE')).toBeInTheDocument()
+  })
+
   it('avisa cuando los porcentajes pasan de 100', async () => {
     render(<GradeCalculator subjects={[calculo]} />)
     const user = userEvent.setup()
