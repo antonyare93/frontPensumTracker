@@ -112,4 +112,30 @@ describe('GradeCalculator', () => {
 
     expect(screen.getByText(/respondas la encuesta docente/)).toBeInTheDocument()
   })
+
+  it('deja de solo lectura lo que viene del portal y marca lo simulado', async () => {
+    const portal: CourseGrades = {
+      code: 'MAT101',
+      name: 'CALCULO I',
+      survey_pending: false,
+      evaluations: [
+        { name: 'PARCIAL 1', percent: 40, grade: 4.5 },
+        { name: 'FINAL', percent: 60, grade: null },
+      ],
+    }
+    render(<GradeCalculator subjects={[calculo]} portalGrades={[portal]} />)
+    const user = userEvent.setup()
+
+    expect(screen.getByLabelText('Nota 1 de Cálculo I')).toHaveAttribute('readonly')
+    expect(screen.getByLabelText('Porcentaje 2 de Cálculo I')).toHaveAttribute('readonly')
+    expect(screen.getByLabelText('Nota 2 de Cálculo I')).not.toHaveAttribute('readonly')
+    expect(screen.queryByLabelText('Quitar evaluación 1 de Cálculo I')).not.toBeInTheDocument()
+
+    await user.type(screen.getByLabelText('Nota 2 de Cálculo I'), '3')
+    expect(screen.getByText(/son simuladas/)).toBeInTheDocument()
+
+    await user.click(screen.getByRole('button', { name: 'Quitar simulación' }))
+    expect(screen.getByLabelText('Nota 2 de Cálculo I')).toHaveValue('')
+    expect(screen.queryByText(/son simuladas/)).not.toBeInTheDocument()
+  })
 })
