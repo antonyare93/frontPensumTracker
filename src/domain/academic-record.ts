@@ -33,6 +33,8 @@ function mergeStage(data: PartialRecord | null, event: StreamEvent): PartialReco
       return { ...data, subjects: event.data.subjects }
     case 'grades':
       return { ...data, current_grades: event.data.courses }
+    case 'missing':
+      return { ...data, missing: event.data }
     default:
       // Etapa que este cliente no conoce: se ignora. Igual que antes, deja un
       // expediente vacío si aún no había ninguno.

@@ -49,6 +49,8 @@ export interface AcademicRecord {
   enrolled_outside_pensum?: EnrolledOutsidePensum[]
   // Llega en una etapa aparte, después del expediente. Falta si el portal falló.
   current_grades?: CourseGrades[]
+  // Faltantes según el portal. Falta si el portal falló.
+  missing?: MissingForGraduation
 }
 
 // Evaluaciones que el docente programó en el portal. La nota falta si aún no la
@@ -64,4 +66,34 @@ export interface CourseGrades {
   name: string
   evaluations: PortalEvaluation[]
   survey_pending: boolean
+}
+
+// Faltantes para grado tal como los reporta el portal (ayudame2).
+export interface MissingSubject {
+  code: string
+  name: string
+  credits: number
+}
+
+export interface MissingBank {
+  name: string
+  credits_required: number
+  credits_approved: number
+  credits_missing: number
+  subjects_required: number | null
+  subjects_approved: number | null
+  subjects_missing: number | null
+  options: MissingSubject[]
+}
+
+export interface PendingGrade {
+  code: string
+  name: string
+  semester: string
+}
+
+export interface MissingForGraduation {
+  mandatory: MissingSubject[]
+  banks: MissingBank[]
+  pending: PendingGrade[]
 }

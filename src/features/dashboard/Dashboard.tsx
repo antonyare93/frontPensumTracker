@@ -2,6 +2,7 @@ import type { PartialRecord } from '@/domain/academic-record'
 import { Alert } from '@/components/ui/Alert'
 import { Collapsible } from '@/components/ui/Collapsible'
 import { GradeCalculator } from '@/features/grades/GradeCalculator'
+import { MissingForGraduation } from '@/features/graduation/MissingForGraduation'
 import { AvailableSubjects } from '@/features/pensum/AvailableSubjects'
 import { ElectiveBanks } from '@/features/pensum/ElectiveBanks'
 import { PensumGrid } from '@/features/pensum/PensumGrid'
@@ -76,6 +77,10 @@ export function Dashboard({ data, error, onReset, onChangeVersion }: Props) {
           </>
         )}
       </section>
+
+      <Collapsible title="Faltantes para grado">
+        {isComplete ? <MissingForGraduation missing={data.missing} /> : <TableSkeleton rows={3} />}
+      </Collapsible>
 
       <Collapsible title="Notas del semestre">
         {isComplete ? <GradeCalculator subjects={data.subjects!} outsidePensum={data.enrolled_outside_pensum} portalGrades={data.current_grades} /> : <TableSkeleton rows={2} />}
