@@ -35,7 +35,7 @@ describe('GradeCalculator', () => {
     await user.type(screen.getByLabelText('Porcentaje 1 de Cálculo I'), '50')
 
     expect(screen.getByText('Acumulado: 2,00 de 50 % evaluado')).toBeInTheDocument()
-    expect(screen.getByText('Necesitas 2,00 en el 50 % restante')).toBeInTheDocument()
+    expect(screen.getByText('Necesitas 1,90 en el 50 % restante')).toBeInTheDocument()
   })
 
   it('agrega y quita evaluaciones', async () => {
@@ -63,7 +63,7 @@ describe('GradeCalculator', () => {
 
     await user.type(screen.getByLabelText('Nota 1 de CURSO LIBRE'), '5')
     await user.type(screen.getByLabelText('Porcentaje 1 de CURSO LIBRE'), '100')
-    expect(screen.getByText('Aprobada')).toBeInTheDocument()
+    expect(screen.getByText(/^Aprobada: la definitiva queda en/)).toBeInTheDocument()
   })
 
   it('con solo matriculadas fuera del pensum no dice que no hay materias', () => {

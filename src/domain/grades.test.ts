@@ -1,12 +1,13 @@
 import { describe, expect, it } from 'vitest'
-import { gradeSummary, PASSING_GRADE } from './grades'
+import { gradeSummary } from './grades'
 
 describe('gradeSummary', () => {
   it('sin notas no hay acumulado y pide la nota mínima en todo el curso', () => {
     expect(gradeSummary([])).toEqual({
       accumulated: 0,
+      finalGrade: 0,
       evaluatedPercent: 0,
-      neededGrade: PASSING_GRADE,
+      neededGrade: 2.95,
       outcome: 'pending',
     })
   })
@@ -21,14 +22,14 @@ describe('gradeSummary', () => {
     expect(result.evaluatedPercent).toBe(50)
   })
 
-  it('calcula la nota que falta en el porcentaje restante para llegar a 3,0', () => {
-    // 1,8 acumulado; faltan 1,2 en el 50 % restante: 2,4.
+  it('calcula la nota que falta en el porcentaje restante para llegar a 2,95', () => {
+    // 1,8 acumulado; 2,95 ya se redondea a 3,0: faltan 1,15 en el 50 % restante, 2,3.
     const result = gradeSummary([
       { grade: 4, percent: 30 },
       { grade: 3, percent: 20 },
     ])
 
-    expect(result.neededGrade).toBeCloseTo(2.4)
+    expect(result.neededGrade).toBeCloseTo(2.3)
     expect(result.outcome).toBe('pending')
   })
 
@@ -50,6 +51,16 @@ describe('gradeSummary', () => {
     expect(gradeSummary([{ grade: 3, percent: 100 }]).outcome).toBe('passed')
     expect(gradeSummary([{ grade: 2.9, percent: 100 }]).outcome).toBe('failed')
     expect(gradeSummary([{ grade: 3, percent: 100 }]).neededGrade).toBeNull()
+  })
+
+  it('redondea la definitiva a una décima: 2,96 y 2,95 aprueban, 2,94 no', () => {
+    const at = (grade: number) => gradeSummary([{ grade, percent: 100 }])
+
+    expect(at(2.96).outcome).toBe('passed')
+    expect(at(2.96).finalGrade).toBeCloseTo(3)
+    expect(at(2.95).outcome).toBe('passed')
+    expect(at(2.94).outcome).toBe('failed')
+    expect(at(2.94).finalGrade).toBeCloseTo(2.9)
   })
 
   it('ignora las filas sin nota o sin porcentaje', () => {

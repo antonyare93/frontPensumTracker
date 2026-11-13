@@ -1,125 +1,163 @@
-import { useState } from 'react'
-import { Plus, X } from 'lucide-react'
-import type { CourseGrades, EnrolledOutsidePensum, Subject } from '@/types/academic'
-import { gradeSummary, MAX_GRADE, MIN_GRADE, type GradeEntry, type GradeSummary } from '@/domain/grades'
-import { Button } from '@/components/ui/Button'
-import { Input } from '@/components/ui/Input'
+import { useState } from "react";
+import { Plus, X } from "lucide-react";
+import type {
+  CourseGrades,
+  EnrolledOutsidePensum,
+  Subject,
+} from "@/types/academic";
+import {
+  gradeSummary,
+  MAX_GRADE,
+  MIN_GRADE,
+  type GradeEntry,
+  type GradeSummary,
+} from "@/domain/grades";
+import { Button } from "@/components/ui/Button";
+import { Input } from "@/components/ui/Input";
 
 interface Props {
-  subjects: Subject[]
-  outsidePensum?: EnrolledOutsidePensum[]
-  portalGrades?: CourseGrades[]
+  subjects: Subject[];
+  outsidePensum?: EnrolledOutsidePensum[];
+  portalGrades?: CourseGrades[];
 }
 
 // Lo que el estudiante escribe, tal cual, para no perder una coma a medio teclear.
 interface DraftRow {
-  grade: string
-  percent: string
+  grade: string;
+  percent: string;
   // Nombre de la evaluación en el portal; las filas que agrega el estudiante no lo tienen.
-  label?: string
+  label?: string;
 }
 
-const EMPTY_ROW: DraftRow = { grade: '', percent: '' }
+const EMPTY_ROW: DraftRow = { grade: "", percent: "" };
 
 function parseNumber(value: string): number | null {
-  const trimmed = value.trim().replace(',', '.')
-  if (trimmed === '') return null
-  const parsed = Number(trimmed)
-  return Number.isFinite(parsed) ? parsed : null
+  const trimmed = value.trim().replace(",", ".");
+  if (trimmed === "") return null;
+  const parsed = Number(trimmed);
+  return Number.isFinite(parsed) ? parsed : null;
 }
 
 function fromPortal(course: CourseGrades | undefined): DraftRow[] {
-  if (!course || course.evaluations.length === 0) return [EMPTY_ROW]
-  return course.evaluations.map(e => ({
-    grade: e.grade === null ? '' : formatPercent(e.grade),
+  if (!course || course.evaluations.length === 0) return [EMPTY_ROW];
+  return course.evaluations.map((e) => ({
+    grade: e.grade === null ? "" : formatPercent(e.grade),
     percent: formatPercent(e.percent),
     label: e.name,
-  }))
+  }));
 }
 
 function toEntry(row: DraftRow): GradeEntry {
-  return { grade: parseNumber(row.grade), percent: parseNumber(row.percent) }
+  return { grade: parseNumber(row.grade), percent: parseNumber(row.percent) };
 }
 
 function formatGrade(value: number): string {
-  return value.toFixed(2).replace('.', ',')
+  return value.toFixed(2).replace(".", ",");
+}
+
+function formatTenth(value: number): string {
+  return value.toFixed(1).replace(".", ",");
 }
 
 function formatPercent(value: number): string {
-  return String(Math.round(value * 100) / 100).replace('.', ',')
+  return String(Math.round(value * 100) / 100).replace(".", ",");
 }
 
-function outcomeMessage(summary: GradeSummary): { text: string; className: string } {
-  const remaining = formatPercent(100 - summary.evaluatedPercent)
+function outcomeMessage(summary: GradeSummary): {
+  text: string;
+  className: string;
+} {
+  const remaining = formatPercent(100 - summary.evaluatedPercent);
   switch (summary.outcome) {
-    case 'invalid':
-      return { text: 'Los porcentajes suman más de 100 %', className: 'text-red-700' }
-    case 'passed':
-      return { text: 'Aprobada', className: 'text-green-700' }
-    case 'failed':
-      return { text: 'Reprobada', className: 'text-red-700' }
-    case 'secured':
-      return { text: 'Ya tienes la nota para aprobar', className: 'text-green-700' }
-    case 'lost':
+    case "invalid":
+      return {
+        text: "Los porcentajes suman más de 100 %",
+        className: "text-red-700",
+      };
+    case "passed":
+      return {
+        text: `Aprobada: la definitiva queda en ${formatTenth(summary.finalGrade)}`,
+        className: "text-green-700",
+      };
+    case "failed":
+      return {
+        text: `Reprobada: la definitiva queda en ${formatTenth(summary.finalGrade)}`,
+        className: "text-red-700",
+      };
+    case "secured":
+      return {
+        text: "Ya tienes la nota para aprobar",
+        className: "text-green-700",
+      };
+    case "lost":
       return {
         text: `Necesitarías ${formatGrade(summary.neededGrade!)} en el ${remaining} % restante: no alcanza`,
-        className: 'text-red-700',
-      }
-    case 'pending':
+        className: "text-red-700",
+      };
+    case "pending":
       return {
         text: `Necesitas ${formatGrade(summary.neededGrade!)} en el ${remaining} % restante`,
-        className: 'text-foreground',
-      }
+        className: "text-foreground",
+      };
   }
 }
 
 // Lo que la tarjeta necesita de una materia. Las que no están en el pensum no
 // traen créditos.
 interface CurrentSubject {
-  code: string
-  name: string
-  credits: number | null
+  code: string;
+  name: string;
+  credits: number | null;
 }
 
 function fromPensum(subject: Subject): CurrentSubject {
-  return { code: subject.code, name: subject.name, credits: subject.credits }
+  return { code: subject.code, name: subject.name, credits: subject.credits };
 }
 
 function fromOutside(subject: EnrolledOutsidePensum): CurrentSubject {
-  return { code: subject.code, name: subject.name ?? `Materia ${subject.code}`, credits: null }
+  return {
+    code: subject.code,
+    name: subject.name ?? `Materia ${subject.code}`,
+    credits: null,
+  };
 }
 
 interface CardProps {
-  subject: CurrentSubject
-  portal?: CourseGrades
+  subject: CurrentSubject;
+  portal?: CourseGrades;
 }
 
 function SubjectGrades({ subject, portal }: CardProps) {
-  const [rows, setRows] = useState<DraftRow[]>(() => fromPortal(portal))
-  const summary = gradeSummary(rows.map(toEntry))
-  const message = outcomeMessage(summary)
+  const [rows, setRows] = useState<DraftRow[]>(() => fromPortal(portal));
+  const summary = gradeSummary(rows.map(toEntry));
+  const message = outcomeMessage(summary);
 
   const updateRow = (index: number, field: keyof DraftRow, value: string) =>
-    setRows(prev => prev.map((row, i) => (i === index ? { ...row, [field]: value } : row)))
-  const addRow = () => setRows(prev => [...prev, EMPTY_ROW])
-  const removeRow = (index: number) => setRows(prev => prev.filter((_, i) => i !== index))
+    setRows((prev) =>
+      prev.map((row, i) => (i === index ? { ...row, [field]: value } : row)),
+    );
+  const addRow = () => setRows((prev) => [...prev, EMPTY_ROW]);
+  const removeRow = (index: number) =>
+    setRows((prev) => prev.filter((_, i) => i !== index));
 
   return (
     <li className="min-w-0 rounded-lg border border-border p-4">
       {/* Envuelve para que la etiqueta larga baje de línea en vez de desbordar en móvil. */}
       <div className="mb-3 flex flex-wrap items-baseline justify-between gap-x-3 gap-y-1">
-        <h3 className="text-sm font-semibold text-foreground">{subject.name}</h3>
+        <h3 className="text-sm font-semibold text-foreground">
+          {subject.name}
+        </h3>
         <span className="text-xs text-muted-foreground">
           {subject.credits === null
-            ? 'No está en el pensum de esta versión'
+            ? "No está en el pensum de esta versión"
             : `${subject.code} · ${subject.credits} créditos`}
         </span>
       </div>
 
       {portal?.survey_pending ? (
         <p className="mb-3 text-xs text-muted-foreground">
-          El portal no muestra tus notas hasta que respondas la encuesta docente de esta materia.
-          Puedes escribirlas aquí mientras tanto.
+          El portal no muestra tus notas hasta que respondas la encuesta docente
+          de esta materia. Puedes escribirlas aquí mientras tanto.
         </p>
       ) : null}
 
@@ -132,14 +170,14 @@ function SubjectGrades({ subject, portal }: CardProps) {
               title={row.label}
               aria-label={`Nota ${i + 1} de ${subject.name}`}
               value={row.grade}
-              onChange={e => updateRow(i, 'grade', e.target.value)}
+              onChange={(e) => updateRow(i, "grade", e.target.value)}
             />
             <Input
               inputMode="decimal"
               placeholder="%"
               aria-label={`Porcentaje ${i + 1} de ${subject.name}`}
               value={row.percent}
-              onChange={e => updateRow(i, 'percent', e.target.value)}
+              onChange={(e) => updateRow(i, "percent", e.target.value)}
               className="w-24 shrink-0"
             />
             {rows.length > 1 ? (
@@ -167,45 +205,58 @@ function SubjectGrades({ subject, portal }: CardProps) {
 
       <div className="mt-2 text-sm" aria-live="polite">
         <p className="text-muted-foreground">
-          Acumulado: {formatGrade(summary.accumulated)} de {formatPercent(summary.evaluatedPercent)} % evaluado
+          Acumulado: {formatGrade(summary.accumulated)} de{" "}
+          {formatPercent(summary.evaluatedPercent)} % evaluado
         </p>
         <p className={message.className}>{message.text}</p>
       </div>
     </li>
-  )
+  );
 }
 
 // Calculadora de notas de las materias en curso. Las notas solo viven en la
 // pestaña: no se envían ni se guardan, igual que el resto del expediente.
-export function GradeCalculator({ subjects, outsidePensum = [], portalGrades }: Props) {
-  const byCode = new Map((portalGrades ?? []).map(course => [course.code, course]))
+export function GradeCalculator({
+  subjects,
+  outsidePensum = [],
+  portalGrades,
+}: Props) {
+  const byCode = new Map(
+    (portalGrades ?? []).map((course) => [course.code, course]),
+  );
   const current = [
-    ...subjects.filter(s => s.cursando).map(fromPensum),
+    ...subjects.filter((s) => s.cursando).map(fromPensum),
     ...outsidePensum.map(fromOutside),
-  ]
+  ];
 
   if (current.length === 0) {
-    return <p className="text-sm text-muted-foreground">No tienes materias matriculadas este semestre.</p>
+    return (
+      <p className="text-sm text-muted-foreground">
+        No tienes materias matriculadas este semestre.
+      </p>
+    );
   }
 
   return (
     <>
       <p className="mb-4 text-sm text-muted-foreground">
         {portalGrades
-          ? 'Las evaluaciones y notas vienen del portal; puedes cambiarlas para simular. '
-          : 'Escribe tus notas y el porcentaje de cada evaluación. '}
-        Se aprueba con 3,0. Lo que cambies no se guarda: se borra al cerrar o recargar la página.
+          ? "Las evaluaciones y notas vienen del portal; puedes cambiarlas para simular. "
+          : "Escribe tus notas y el porcentaje de cada evaluación. "}
+        Se aprueba con 3,0 (la definitiva se redondea a una décima: 2,95 ya es
+        3,0). Lo que cambies no se guarda: se borra al cerrar o recargar la
+        página.
       </p>
       <ul className="grid gap-4 md:grid-cols-2">
-        {current.map(subject => (
+        {current.map((subject) => (
           // La key cambia cuando llegan las notas del portal para que la tarjeta se arme con ellas.
           <SubjectGrades
-            key={`${subject.code}-${portalGrades ? 'portal' : 'manual'}`}
+            key={`${subject.code}-${portalGrades ? "portal" : "manual"}`}
             subject={subject}
             portal={byCode.get(subject.code)}
           />
         ))}
       </ul>
     </>
-  )
+  );
 }
