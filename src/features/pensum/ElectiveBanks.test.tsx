@@ -57,4 +57,29 @@ describe('ElectiveBanks', () => {
 
     expect(screen.getByText('No hay bancos de electivas registrados.')).toBeInTheDocument()
   })
+
+  it('con los faltantes del portal: cumplido si no está en la lista, lo que falta si está', () => {
+    const [pro, comp] = record.elective_banks
+    const missing = {
+      mandatory: [],
+      pending: [],
+      banks: [
+        {
+          name: pro.name,
+          credits_required: 6,
+          credits_approved: 3,
+          credits_missing: 3,
+          subjects_required: null,
+          subjects_approved: null,
+          subjects_missing: null,
+          options: [],
+        },
+      ],
+    }
+    render(<ElectiveBanks banks={[pro, { ...comp, credits_required: null }]} subjects={subjects} missing={missing} />)
+
+    expect(screen.getByText('Te faltan 3 créditos (llevas 3 de 6)')).toBeInTheDocument()
+    expect(screen.getByText('2 créditos aprobados · cumplido')).toBeInTheDocument()
+    expect(screen.queryByText(/mínimo no disponible/)).not.toBeInTheDocument()
+  })
 })

@@ -1,28 +1,58 @@
 import { useState } from 'react'
 import { Plus, X } from 'lucide-react'
-import type { EnrolledOutsidePensum, Subject } from '@/types/academic'
-import { gradeSummary, MAX_GRADE, MIN_GRADE, type GradeEntry, type GradeSummary } from '@/domain/grades'
+import type { CourseGrades, EnrolledOutsidePensum, Subject } from '@/types/academic'
+import {
+  gradeSummary,
+  MAX_GRADE,
+  MIN_GRADE,
+  type GradeEntry,
+  type GradeSummary,
+} from '@/domain/grades'
 import { Button } from '@/components/ui/Button'
 import { Input } from '@/components/ui/Input'
+import { cn } from '@/lib/utils'
 
 interface Props {
   subjects: Subject[]
   outsidePensum?: EnrolledOutsidePensum[]
+  portalGrades?: CourseGrades[]
 }
 
 // Lo que el estudiante escribe, tal cual, para no perder una coma a medio teclear.
 interface DraftRow {
   grade: string
   percent: string
+  // Nombre de la evaluación en el portal; las filas que agrega el estudiante no lo tienen.
+  label?: string
+  // Fila que viene del portal: su porcentaje no se cambia ni se quita.
+  fromPortal?: boolean
+  // La nota ya está en el portal: es real y queda de solo lectura.
+  official?: boolean
 }
 
 const EMPTY_ROW: DraftRow = { grade: '', percent: '' }
+
+// Lo que el estudiante escribió para simular, para poder distinguirlo de lo real.
+function isSimulated(row: DraftRow): boolean {
+  return !row.official && row.grade.trim() !== ''
+}
 
 function parseNumber(value: string): number | null {
   const trimmed = value.trim().replace(',', '.')
   if (trimmed === '') return null
   const parsed = Number(trimmed)
   return Number.isFinite(parsed) ? parsed : null
+}
+
+function fromPortal(course: CourseGrades | undefined): DraftRow[] {
+  if (!course || course.evaluations.length === 0) return [EMPTY_ROW]
+  return course.evaluations.map(e => ({
+    grade: e.grade === null ? '' : formatPercent(e.grade),
+    percent: formatPercent(e.percent),
+    label: e.name,
+    fromPortal: true,
+    official: e.grade !== null,
+  }))
 }
 
 function toEntry(row: DraftRow): GradeEntry {
@@ -33,21 +63,40 @@ function formatGrade(value: number): string {
   return value.toFixed(2).replace('.', ',')
 }
 
+function formatTenth(value: number): string {
+  return value.toFixed(1).replace('.', ',')
+}
+
 function formatPercent(value: number): string {
   return String(Math.round(value * 100) / 100).replace('.', ',')
 }
 
-function outcomeMessage(summary: GradeSummary): { text: string; className: string } {
+function outcomeMessage(summary: GradeSummary): {
+  text: string
+  className: string
+} {
   const remaining = formatPercent(100 - summary.evaluatedPercent)
   switch (summary.outcome) {
     case 'invalid':
-      return { text: 'Los porcentajes suman más de 100 %', className: 'text-red-700' }
+      return {
+        text: 'Los porcentajes suman más de 100 %',
+        className: 'text-red-700',
+      }
     case 'passed':
-      return { text: 'Aprobada', className: 'text-green-700' }
+      return {
+        text: `Aprobada: la definitiva queda en ${formatTenth(summary.finalGrade)}`,
+        className: 'text-green-700',
+      }
     case 'failed':
-      return { text: 'Reprobada', className: 'text-red-700' }
+      return {
+        text: `Reprobada: la definitiva queda en ${formatTenth(summary.finalGrade)}`,
+        className: 'text-red-700',
+      }
     case 'secured':
-      return { text: 'Ya tienes la nota para aprobar', className: 'text-green-700' }
+      return {
+        text: 'Ya tienes la nota para aprobar',
+        className: 'text-green-700',
+      }
     case 'lost':
       return {
         text: `Necesitarías ${formatGrade(summary.neededGrade!)} en el ${remaining} % restante: no alcanza`,
@@ -74,15 +123,20 @@ function fromPensum(subject: Subject): CurrentSubject {
 }
 
 function fromOutside(subject: EnrolledOutsidePensum): CurrentSubject {
-  return { code: subject.code, name: subject.name ?? `Materia ${subject.code}`, credits: null }
+  return {
+    code: subject.code,
+    name: subject.name ?? `Materia ${subject.code}`,
+    credits: null,
+  }
 }
 
 interface CardProps {
   subject: CurrentSubject
+  portal?: CourseGrades
 }
 
-function SubjectGrades({ subject }: CardProps) {
-  const [rows, setRows] = useState<DraftRow[]>([EMPTY_ROW])
+function SubjectGrades({ subject, portal }: CardProps) {
+  const [rows, setRows] = useState<DraftRow[]>(() => fromPortal(portal))
   const summary = gradeSummary(rows.map(toEntry))
   const message = outcomeMessage(summary)
 
@@ -90,6 +144,8 @@ function SubjectGrades({ subject }: CardProps) {
     setRows(prev => prev.map((row, i) => (i === index ? { ...row, [field]: value } : row)))
   const addRow = () => setRows(prev => [...prev, EMPTY_ROW])
   const removeRow = (index: number) => setRows(prev => prev.filter((_, i) => i !== index))
+  const resetSimulation = () => setRows(fromPortal(portal))
+  const simulated = rows.some(isSimulated) || rows.some(row => !row.fromPortal && row.percent !== '')
 
   return (
     <li className="min-w-0 rounded-lg border border-border p-4">
@@ -103,25 +159,39 @@ function SubjectGrades({ subject }: CardProps) {
         </span>
       </div>
 
+      {portal?.survey_pending ? (
+        <p className="mb-3 text-xs text-muted-foreground">
+          El portal no muestra tus notas hasta que respondas la encuesta docente de esta materia.
+          Puedes escribirlas aquí mientras tanto.
+        </p>
+      ) : null}
+
       <div className="space-y-2">
         {rows.map((row, i) => (
           <div key={i} className="flex items-center gap-2">
             <Input
               inputMode="decimal"
-              placeholder={`Nota (${MIN_GRADE} a ${MAX_GRADE})`}
+              placeholder={row.label ?? `Nota (${MIN_GRADE} a ${MAX_GRADE})`}
+              title={row.official ? `${row.label}: nota del portal` : row.label}
               aria-label={`Nota ${i + 1} de ${subject.name}`}
               value={row.grade}
+              readOnly={row.official}
               onChange={e => updateRow(i, 'grade', e.target.value)}
+              className={cn(
+                row.official && 'cursor-default bg-muted font-medium',
+                isSimulated(row) && 'border-dashed border-blue-400 italic text-blue-700',
+              )}
             />
             <Input
               inputMode="decimal"
               placeholder="%"
               aria-label={`Porcentaje ${i + 1} de ${subject.name}`}
               value={row.percent}
+              readOnly={row.fromPortal}
               onChange={e => updateRow(i, 'percent', e.target.value)}
-              className="w-24 shrink-0"
+              className={cn('w-24 shrink-0', row.fromPortal && 'cursor-default bg-muted')}
             />
-            {rows.length > 1 ? (
+            {!row.fromPortal && rows.length > 1 ? (
               <Button
                 variant="ghost"
                 className="px-2"
@@ -144,9 +214,21 @@ function SubjectGrades({ subject }: CardProps) {
         <Plus className="size-4" aria-hidden="true" /> Agregar evaluación
       </Button>
 
+      {simulated ? (
+        <p className="mt-1 flex flex-wrap items-center gap-x-2 text-xs text-blue-700">
+          Las notas en azul son simuladas, no están en el portal.
+          {portal ? (
+            <Button variant="ghost" className="h-auto px-0 text-xs underline" onClick={resetSimulation}>
+              Quitar simulación
+            </Button>
+          ) : null}
+        </p>
+      ) : null}
+
       <div className="mt-2 text-sm" aria-live="polite">
         <p className="text-muted-foreground">
-          Acumulado: {formatGrade(summary.accumulated)} de {formatPercent(summary.evaluatedPercent)} % evaluado
+          Acumulado: {formatGrade(summary.accumulated)} de {formatPercent(summary.evaluatedPercent)}{' '}
+          % evaluado
         </p>
         <p className={message.className}>{message.text}</p>
       </div>
@@ -156,25 +238,38 @@ function SubjectGrades({ subject }: CardProps) {
 
 // Calculadora de notas de las materias en curso. Las notas solo viven en la
 // pestaña: no se envían ni se guardan, igual que el resto del expediente.
-export function GradeCalculator({ subjects, outsidePensum = [] }: Props) {
+export function GradeCalculator({ subjects, outsidePensum = [], portalGrades }: Props) {
+  const byCode = new Map((portalGrades ?? []).map(course => [course.code, course]))
   const current = [
     ...subjects.filter(s => s.cursando).map(fromPensum),
     ...outsidePensum.map(fromOutside),
   ]
 
   if (current.length === 0) {
-    return <p className="text-sm text-muted-foreground">No tienes materias matriculadas este semestre.</p>
+    return (
+      <p className="text-sm text-muted-foreground">
+        No tienes materias matriculadas este semestre.
+      </p>
+    )
   }
 
   return (
     <>
       <p className="mb-4 text-sm text-muted-foreground">
-        Escribe tus notas y el porcentaje de cada evaluación. Se aprueba con 3,0. Las notas no se
-        guardan: se borran al cerrar o recargar la página.
+        {portalGrades
+          ? 'Las notas del portal no se pueden cambiar. Escribe en las vacías para simular lo que te falta. '
+          : 'Escribe tus notas y el porcentaje de cada evaluación. '}
+        Se aprueba con 3,0 (la definitiva se redondea a una décima: 2,95 ya es 3,0). Lo que cambies
+        no se guarda: se borra al cerrar o recargar la página.
       </p>
       <ul className="grid gap-4 md:grid-cols-2">
         {current.map(subject => (
-          <SubjectGrades key={subject.code} subject={subject} />
+          // La key cambia cuando llegan las notas del portal para que la tarjeta se arme con ellas.
+          <SubjectGrades
+            key={`${subject.code}-${portalGrades ? 'portal' : 'manual'}`}
+            subject={subject}
+            portal={byCode.get(subject.code)}
+          />
         ))}
       </ul>
     </>

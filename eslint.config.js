@@ -57,7 +57,7 @@ const features = readdirSync(new URL('./src/features', import.meta.url), { withF
   .map(entry => entry.name)
 
 // Únicos cruces permitidos entre features.
-const mayCompose = { dashboard: ['pensum', 'grades'] }
+const mayCompose = { dashboard: ['pensum', 'grades', 'graduation'] }
 
 const featureLayers = features.map(name =>
   layer(`src/features/${name}/**/*.{ts,tsx}`, {
