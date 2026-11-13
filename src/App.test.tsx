@@ -83,11 +83,15 @@ describe('App', () => {
       'MAT301',
     ])
 
-    // Materia en curso de la calculadora de notas y bancos de electivas, en el
-    // orden que los entrega el backend.
+    // Cada sección va en su pestaña del menú.
+    await user.click(screen.getByRole('button', { name: 'Notas' }))
+    expect(screen.getByRole('heading', { level: 3, name: 'Cálculo II' })).toBeInTheDocument()
+
+    // Bancos de electivas en el orden que los entrega el backend.
+    await user.click(screen.getByRole('button', { name: 'Electivas' }))
     expect(
       screen.getAllByRole('heading', { level: 3 }).map(heading => heading.textContent),
-    ).toEqual(['Cálculo II', 'Electivas profesionales', 'Formación complementaria'])
+    ).toEqual(['Electivas profesionales', 'Formación complementaria'])
     expect(screen.getByText('3 / 6 créditos')).toBeInTheDocument()
     expect(screen.getByText('2 / 2 créditos')).toBeInTheDocument()
   })
@@ -99,6 +103,7 @@ describe('App', () => {
     await login(user)
     await screen.findByLabelText('Progreso: 34% aprobado')
 
+    await user.click(screen.getByRole('button', { name: 'Electivas' }))
     await user.click(screen.getAllByRole('button', { name: 'Ver 2 materias' })[1])
 
     const items = within(screen.getAllByRole('list').at(-1)!).getAllByRole('listitem')
@@ -144,7 +149,7 @@ describe('App', () => {
     expect(await screen.findByLabelText('Progreso: 34% aprobado')).toBeInTheDocument()
     expect(screen.getByText('Ingeniería de Sistemas')).toBeInTheDocument()
     // En el pensum y en la calculadora de notas, porque está en curso.
-    expect(screen.getAllByText('Cálculo II')).toHaveLength(2)
+    expect(screen.getAllByText('Cálculo II')).toHaveLength(1)
   })
 
   it('vuelve al login al cerrar sesión', async () => {
