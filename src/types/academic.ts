@@ -22,6 +22,13 @@ export interface ElectiveBank {
   subject_codes: string[]
 }
 
+// Matriculada que no está en el pensum de la versión elegida. La constancia no
+// siempre trae el nombre.
+export interface EnrolledOutsidePensum {
+  code: string
+  name: string | null
+}
+
 export interface AcademicRecord {
   student_name: string
   program_name: string
@@ -37,4 +44,6 @@ export interface AcademicRecord {
   graduated: boolean
   elective_banks: ElectiveBank[]
   subjects: Subject[]
+  // Opcional: un backend anterior no lo manda.
+  enrolled_outside_pensum?: EnrolledOutsidePensum[]
 }

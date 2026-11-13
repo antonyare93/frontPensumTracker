@@ -78,7 +78,7 @@ export function Dashboard({ data, error, onReset, onChangeVersion }: Props) {
       </section>
 
       <Collapsible title="Notas del semestre">
-        {isComplete ? <GradeCalculator subjects={data.subjects!} /> : <TableSkeleton rows={2} />}
+        {isComplete ? <GradeCalculator subjects={data.subjects!} outsidePensum={data.enrolled_outside_pensum} /> : <TableSkeleton rows={2} />}
       </Collapsible>
 
       <Collapsible title="Materias disponibles">
