@@ -1,33 +1,32 @@
-import { useState } from "react";
-import type { PartialRecord } from "@/domain/academic-record";
-import { Alert } from "@/components/ui/Alert";
-import { Collapsible } from "@/components/ui/Collapsible";
-import { GradeCalculator } from "@/features/grades/GradeCalculator";
-import { MissingForGraduation } from "@/features/graduation/MissingForGraduation";
-import { AvailableSubjects } from "@/features/pensum/AvailableSubjects";
-import { ElectiveBanks } from "@/features/pensum/ElectiveBanks";
-import { PensumGrid } from "@/features/pensum/PensumGrid";
-import { PensumGridSkeleton, TableSkeleton } from "@/features/pensum/skeletons";
-import { CreditsSummary } from "./CreditsSummary";
-import { DashboardHeader } from "./DashboardHeader";
-import { GaugeSkeleton } from "./skeletons";
-import { SectionNav, type Section } from "./SectionNav";
-import { VersionSelector } from "./VersionSelector";
+import { useState } from 'react'
+import type { PartialRecord } from '@/domain/academic-record'
+import { Alert } from '@/components/ui/Alert'
+import { Collapsible } from '@/components/ui/Collapsible'
+import { GradeCalculator } from '@/features/grades/GradeCalculator'
+import { MissingForGraduation } from '@/features/graduation/MissingForGraduation'
+import { AvailableSubjects } from '@/features/pensum/AvailableSubjects'
+import { ElectiveBanks } from '@/features/pensum/ElectiveBanks'
+import { PensumGrid } from '@/features/pensum/PensumGrid'
+import { PensumGridSkeleton, TableSkeleton } from '@/features/pensum/skeletons'
+import { CreditsSummary } from './CreditsSummary'
+import { DashboardHeader } from './DashboardHeader'
+import { GaugeSkeleton } from './skeletons'
+import { SectionNav, type Section } from './SectionNav'
+import { VersionSelector } from './VersionSelector'
 
 interface Props {
-  data: PartialRecord;
-  error: string | null;
-  onReset: () => void;
-  onChangeVersion: (version: number) => Promise<void>;
+  data: PartialRecord
+  error: string | null
+  onReset: () => void
+  onChangeVersion: (version: number) => Promise<void>
 }
 
 // El expediente llega por etapas: cada bloque se pinta cuando ya tiene sus datos.
 export function Dashboard({ data, error, onReset, onChangeVersion }: Props) {
-  const hasProgram =
-    data.versiones !== undefined && data.pensum_version !== undefined;
-  const hasSubjects = Array.isArray(data.subjects);
-  const isComplete = data.completed_credits !== undefined;
-  const [section, setSection] = useState<Section>("summary");
+  const hasProgram = data.versiones !== undefined && data.pensum_version !== undefined
+  const hasSubjects = Array.isArray(data.subjects)
+  const isComplete = data.completed_credits !== undefined
+  const [section, setSection] = useState<Section>('summary')
 
   return (
     <div className="mx-auto max-w-6xl px-4 pt-5 pb-24 md:p-6">
@@ -56,14 +55,13 @@ export function Dashboard({ data, error, onReset, onChangeVersion }: Props) {
 
       {data.graduated ? (
         <Alert variant="success" className="mb-6">
-          Completaste todos los créditos del plan. No tienes materias pendientes
-          para el grado.
+          Completaste todos los créditos del plan. No tienes materias pendientes para el grado.
         </Alert>
       ) : null}
 
       <SectionNav current={section} onChange={setSection} />
 
-      {section === "summary" ? (
+      {section === 'summary' ? (
         <>
           <div className="mx-auto mb-8 max-w-xs">
             {isComplete ? (
@@ -83,29 +81,21 @@ export function Dashboard({ data, error, onReset, onChangeVersion }: Props) {
               <PensumGrid subjects={data.subjects!} />
             ) : (
               <>
-                <h2 className="mb-4 text-base font-semibold text-foreground">
-                  Pensum
-                </h2>
+                <h2 className="mb-4 text-base font-semibold text-foreground">Pensum</h2>
                 <PensumGridSkeleton />
               </>
             )}
           </section>
 
           <Collapsible title="Materias disponibles">
-            {isComplete ? (
-              <AvailableSubjects subjects={data.subjects!} />
-            ) : (
-              <TableSkeleton />
-            )}
+            {isComplete ? <AvailableSubjects subjects={data.subjects!} /> : <TableSkeleton />}
           </Collapsible>
         </>
       ) : null}
 
-      {section === "grades" ? (
+      {section === 'grades' ? (
         <section>
-          <h2 className="mb-4 text-base font-semibold text-foreground">
-            Notas del semestre
-          </h2>
+          <h2 className="mb-4 text-base font-semibold text-foreground">Notas del semestre</h2>
           {isComplete ? (
             <GradeCalculator
               subjects={data.subjects!}
@@ -118,11 +108,9 @@ export function Dashboard({ data, error, onReset, onChangeVersion }: Props) {
         </section>
       ) : null}
 
-      {section === "missing" ? (
+      {section === 'missing' ? (
         <section>
-          <h2 className="mb-4 text-base font-semibold text-foreground">
-            Faltantes para grado
-          </h2>
+          <h2 className="mb-4 text-base font-semibold text-foreground">Faltantes para grado</h2>
           {isComplete ? (
             <MissingForGraduation missing={data.missing} />
           ) : (
@@ -131,15 +119,14 @@ export function Dashboard({ data, error, onReset, onChangeVersion }: Props) {
         </section>
       ) : null}
 
-      {section === "electives" ? (
+      {section === 'electives' ? (
         <section>
-          <h2 className="mb-4 text-base font-semibold text-foreground">
-            Electivas
-          </h2>
+          <h2 className="mb-4 text-base font-semibold text-foreground">Electivas</h2>
           {isComplete ? (
             <ElectiveBanks
               banks={data.elective_banks!}
               subjects={data.subjects!}
+              missing={data.missing}
             />
           ) : (
             <TableSkeleton rows={3} />
@@ -147,5 +134,5 @@ export function Dashboard({ data, error, onReset, onChangeVersion }: Props) {
         </section>
       ) : null}
     </div>
-  );
+  )
 }

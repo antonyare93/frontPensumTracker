@@ -1,4 +1,5 @@
-import type { MissingBank, MissingForGraduation as Missing, MissingSubject } from '@/types/academic'
+import type { MissingForGraduation as Missing, MissingSubject } from '@/types/academic'
+import { missingBankText } from '@/domain/graduation'
 
 interface Props {
   missing: Missing | undefined
@@ -6,14 +7,6 @@ interface Props {
 
 function plural(n: number, one: string, many: string): string {
   return `${n} ${n === 1 ? one : many}`
-}
-
-// El portal mide algunos bancos por materias (la práctica) y otros por créditos.
-function bankStatus(bank: MissingBank): string {
-  if (bank.subjects_missing) {
-    return `Te ${bank.subjects_missing === 1 ? 'falta' : 'faltan'} ${plural(bank.subjects_missing, 'materia', 'materias')}`
-  }
-  return `Te ${bank.credits_missing === 1 ? 'falta' : 'faltan'} ${plural(bank.credits_missing, 'crédito', 'créditos')} (llevas ${bank.credits_approved} de ${bank.credits_required})`
 }
 
 function SubjectList({ subjects }: { subjects: MissingSubject[] }) {
@@ -43,7 +36,11 @@ export function MissingForGraduation({ missing }: Props) {
   }
   const { mandatory, banks, pending } = missing
   if (mandatory.length === 0 && banks.length === 0) {
-    return <p className="text-sm text-green-700">Según el portal no te falta ninguna materia para grado.</p>
+    return (
+      <p className="text-sm text-green-700">
+        Según el portal no te falta ninguna materia para grado.
+      </p>
+    )
   }
 
   return (
@@ -63,7 +60,7 @@ export function MissingForGraduation({ missing }: Props) {
           {banks.map(bank => (
             <div key={bank.name} className="rounded-lg border border-border p-3">
               <p className="text-sm font-medium text-foreground">{bank.name}</p>
-              <p className="mb-2 text-sm text-muted-foreground">{bankStatus(bank)}</p>
+              <p className="mb-2 text-sm text-muted-foreground">{missingBankText(bank)}</p>
               {bank.options.length > 0 ? (
                 <>
                   <p className="mb-1 text-xs text-muted-foreground">Puedes cursar:</p>
@@ -77,11 +74,16 @@ export function MissingForGraduation({ missing }: Props) {
 
       {pending.length > 0 ? (
         <section>
-          <h3 className="mb-2 text-sm font-semibold text-foreground">Con nota pendiente del docente</h3>
+          <h3 className="mb-2 text-sm font-semibold text-foreground">
+            Con nota pendiente del docente
+          </h3>
           <ul className="space-y-1 text-sm">
             {pending.map(p => (
               <li key={`${p.code}-${p.semester}`} className="text-foreground">
-                {p.name} <span className="text-muted-foreground">({p.code}, semestre {p.semester})</span>
+                {p.name}{' '}
+                <span className="text-muted-foreground">
+                  ({p.code}, semestre {p.semester})
+                </span>
               </li>
             ))}
           </ul>

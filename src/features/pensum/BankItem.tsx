@@ -4,6 +4,7 @@ import type { ElectiveBank, Subject } from '@/types/academic'
 import { cn } from '@/lib/utils'
 import { indexByCode } from '@/domain/pensum'
 import { percentOf } from '@/domain/progress'
+import { missingBankText, type BankPortalStatus } from '@/domain/graduation'
 import { Badge } from '@/components/ui/Badge'
 import { Button } from '@/components/ui/Button'
 import { ProgressBar } from '@/components/ui/ProgressBar'
@@ -12,30 +13,57 @@ import { SUBJECT_STATUS } from './subject-status'
 interface Props {
   bank: ElectiveBank
   subjects: Subject[]
+  portal?: BankPortalStatus
 }
 
-export function BankItem({ bank, subjects }: Props) {
+// Texto y barra del encabezado. Lo del portal manda; sin él, el cálculo propio.
+function header(
+  bank: ElectiveBank,
+  portal: BankPortalStatus,
+): { text: string; percent: number | null } {
+  if (portal.kind === 'done') {
+    return {
+      text: `${bank.credits_approved} créditos aprobados · cumplido`,
+      percent: 100,
+    }
+  }
+  if (portal.kind === 'missing') {
+    const p = portal.bank
+    const percent = p.subjects_required
+      ? percentOf(p.subjects_approved ?? 0, p.subjects_required)
+      : p.credits_required > 0
+        ? percentOf(p.credits_approved, p.credits_required)
+        : null
+    return { text: missingBankText(p), percent }
+  }
+  const required = bank.credits_required
+  // Sin mínimo conocido una barra mentiría sobre el avance.
+  return required === null
+    ? {
+        text: `${bank.credits_approved} créditos aprobados · mínimo no disponible`,
+        percent: null,
+      }
+    : {
+        text: `${bank.credits_approved} / ${required} créditos`,
+        percent: percentOf(bank.credits_approved, required),
+      }
+}
+
+export function BankItem({ bank, subjects, portal = { kind: 'unknown' } }: Props) {
   const [open, setOpen] = useState(false)
 
   const subjectMap = useMemo(() => indexByCode(subjects), [subjects])
 
-  const required = bank.credits_required
+  const { text, percent } = header(bank, portal)
 
   return (
     <div className="border border-gray-200 rounded-lg overflow-hidden">
       <div className="px-4 py-3 bg-gray-50">
         <div className="mb-2 flex flex-col gap-1 sm:flex-row sm:items-center sm:justify-between">
           <h3 className="text-sm font-semibold text-foreground">{bank.name}</h3>
-          <span className="text-xs tabular-nums text-muted-foreground">
-            {required === null
-              ? `${bank.credits_approved} créditos aprobados · mínimo no disponible`
-              : `${bank.credits_approved} / ${required} créditos`}
-          </span>
+          <span className="text-xs tabular-nums text-muted-foreground">{text}</span>
         </div>
-        {/* Sin mínimo conocido una barra mentiría sobre el avance. */}
-        {required === null ? null : (
-          <ProgressBar percent={percentOf(bank.credits_approved, required)} />
-        )}
+        {percent === null ? null : <ProgressBar percent={percent} />}
       </div>
 
       <Button variant="ghost" onClick={() => setOpen(o => !o)} className="w-full">
