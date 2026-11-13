@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import { Plus, X } from 'lucide-react'
-import type { EnrolledOutsidePensum, Subject } from '@/types/academic'
+import type { CourseGrades, EnrolledOutsidePensum, Subject } from '@/types/academic'
 import { gradeSummary, MAX_GRADE, MIN_GRADE, type GradeEntry, type GradeSummary } from '@/domain/grades'
 import { Button } from '@/components/ui/Button'
 import { Input } from '@/components/ui/Input'
@@ -8,12 +8,15 @@ import { Input } from '@/components/ui/Input'
 interface Props {
   subjects: Subject[]
   outsidePensum?: EnrolledOutsidePensum[]
+  portalGrades?: CourseGrades[]
 }
 
 // Lo que el estudiante escribe, tal cual, para no perder una coma a medio teclear.
 interface DraftRow {
   grade: string
   percent: string
+  // Nombre de la evaluación en el portal; las filas que agrega el estudiante no lo tienen.
+  label?: string
 }
 
 const EMPTY_ROW: DraftRow = { grade: '', percent: '' }
@@ -23,6 +26,15 @@ function parseNumber(value: string): number | null {
   if (trimmed === '') return null
   const parsed = Number(trimmed)
   return Number.isFinite(parsed) ? parsed : null
+}
+
+function fromPortal(course: CourseGrades | undefined): DraftRow[] {
+  if (!course || course.evaluations.length === 0) return [EMPTY_ROW]
+  return course.evaluations.map(e => ({
+    grade: e.grade === null ? '' : formatPercent(e.grade),
+    percent: formatPercent(e.percent),
+    label: e.name,
+  }))
 }
 
 function toEntry(row: DraftRow): GradeEntry {
@@ -79,10 +91,11 @@ function fromOutside(subject: EnrolledOutsidePensum): CurrentSubject {
 
 interface CardProps {
   subject: CurrentSubject
+  portal?: CourseGrades
 }
 
-function SubjectGrades({ subject }: CardProps) {
-  const [rows, setRows] = useState<DraftRow[]>([EMPTY_ROW])
+function SubjectGrades({ subject, portal }: CardProps) {
+  const [rows, setRows] = useState<DraftRow[]>(() => fromPortal(portal))
   const summary = gradeSummary(rows.map(toEntry))
   const message = outcomeMessage(summary)
 
@@ -103,12 +116,20 @@ function SubjectGrades({ subject }: CardProps) {
         </span>
       </div>
 
+      {portal?.survey_pending ? (
+        <p className="mb-3 text-xs text-muted-foreground">
+          El portal no muestra tus notas hasta que respondas la encuesta docente de esta materia.
+          Puedes escribirlas aquí mientras tanto.
+        </p>
+      ) : null}
+
       <div className="space-y-2">
         {rows.map((row, i) => (
           <div key={i} className="flex items-center gap-2">
             <Input
               inputMode="decimal"
-              placeholder={`Nota (${MIN_GRADE} a ${MAX_GRADE})`}
+              placeholder={row.label ?? `Nota (${MIN_GRADE} a ${MAX_GRADE})`}
+              title={row.label}
               aria-label={`Nota ${i + 1} de ${subject.name}`}
               value={row.grade}
               onChange={e => updateRow(i, 'grade', e.target.value)}
@@ -156,7 +177,8 @@ function SubjectGrades({ subject }: CardProps) {
 
 // Calculadora de notas de las materias en curso. Las notas solo viven en la
 // pestaña: no se envían ni se guardan, igual que el resto del expediente.
-export function GradeCalculator({ subjects, outsidePensum = [] }: Props) {
+export function GradeCalculator({ subjects, outsidePensum = [], portalGrades }: Props) {
+  const byCode = new Map((portalGrades ?? []).map(course => [course.code, course]))
   const current = [
     ...subjects.filter(s => s.cursando).map(fromPensum),
     ...outsidePensum.map(fromOutside),
@@ -169,12 +191,19 @@ export function GradeCalculator({ subjects, outsidePensum = [] }: Props) {
   return (
     <>
       <p className="mb-4 text-sm text-muted-foreground">
-        Escribe tus notas y el porcentaje de cada evaluación. Se aprueba con 3,0. Las notas no se
-        guardan: se borran al cerrar o recargar la página.
+        {portalGrades
+          ? 'Las evaluaciones y notas vienen del portal; puedes cambiarlas para simular. '
+          : 'Escribe tus notas y el porcentaje de cada evaluación. '}
+        Se aprueba con 3,0. Lo que cambies no se guarda: se borra al cerrar o recargar la página.
       </p>
       <ul className="grid gap-4 md:grid-cols-2">
         {current.map(subject => (
-          <SubjectGrades key={subject.code} subject={subject} />
+          // La key cambia cuando llegan las notas del portal para que la tarjeta se arme con ellas.
+          <SubjectGrades
+            key={`${subject.code}-${portalGrades ? 'portal' : 'manual'}`}
+            subject={subject}
+            portal={byCode.get(subject.code)}
+          />
         ))}
       </ul>
     </>

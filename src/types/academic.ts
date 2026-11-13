@@ -47,4 +47,21 @@ export interface AcademicRecord {
   subjects: Subject[]
   // Opcional: un backend anterior no lo manda.
   enrolled_outside_pensum?: EnrolledOutsidePensum[]
+  // Llega en una etapa aparte, después del expediente. Falta si el portal falló.
+  current_grades?: CourseGrades[]
+}
+
+// Evaluaciones que el docente programó en el portal. La nota falta si aún no la
+// sube o si el estudiante no ha respondido la encuesta docente.
+export interface PortalEvaluation {
+  name: string
+  percent: number
+  grade: number | null
+}
+
+export interface CourseGrades {
+  code: string
+  name: string
+  evaluations: PortalEvaluation[]
+  survey_pending: boolean
 }

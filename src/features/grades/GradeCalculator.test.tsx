@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest'
 import { render, screen } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
-import type { Subject } from '@/types/academic'
+import type { CourseGrades, Subject } from '@/types/academic'
 import { GradeCalculator } from './GradeCalculator'
 
 const calculo: Subject = {
@@ -81,5 +81,35 @@ describe('GradeCalculator', () => {
     await user.type(screen.getByLabelText('Porcentaje 1 de Cálculo I'), '120')
 
     expect(screen.getByText('Los porcentajes suman más de 100 %')).toBeInTheDocument()
+  })
+
+  it('precarga las evaluaciones y notas que trae el portal', () => {
+    const portal: CourseGrades = {
+      code: 'MAT101',
+      name: 'CALCULO I',
+      survey_pending: false,
+      evaluations: [
+        { name: 'PARCIAL 1', percent: 40, grade: 4.5 },
+        { name: 'FINAL', percent: 60, grade: null },
+      ],
+    }
+    render(<GradeCalculator subjects={[calculo]} portalGrades={[portal]} />)
+
+    expect(screen.getByLabelText('Nota 1 de Cálculo I')).toHaveValue('4,5')
+    expect(screen.getByLabelText('Porcentaje 2 de Cálculo I')).toHaveValue('60')
+    expect(screen.getByLabelText('Nota 2 de Cálculo I')).toHaveAttribute('placeholder', 'FINAL')
+    expect(screen.getByText('Acumulado: 1,80 de 40 % evaluado')).toBeInTheDocument()
+  })
+
+  it('avisa cuando el portal oculta las notas por la encuesta docente', () => {
+    const portal: CourseGrades = {
+      code: 'MAT101',
+      name: 'CALCULO I',
+      survey_pending: true,
+      evaluations: [{ name: 'PARCIAL 1', percent: 40, grade: null }],
+    }
+    render(<GradeCalculator subjects={[calculo]} portalGrades={[portal]} />)
+
+    expect(screen.getByText(/respondas la encuesta docente/)).toBeInTheDocument()
   })
 })

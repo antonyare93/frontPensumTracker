@@ -31,6 +31,8 @@ function mergeStage(data: PartialRecord | null, event: StreamEvent): PartialReco
       // El backend repite el pensum; una vez calculado el expediente, sus estados mandan.
       if (data?.completed_credits !== undefined) return data
       return { ...data, subjects: event.data.subjects }
+    case 'grades':
+      return { ...data, current_grades: event.data.courses }
     default:
       // Etapa que este cliente no conoce: se ignora. Igual que antes, deja un
       // expediente vacío si aún no había ninguno.
