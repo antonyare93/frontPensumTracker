@@ -42,23 +42,11 @@ export function gradeSummary(entries: readonly GradeEntry[]): GradeSummary {
   const finalGrade = roundToTenth(accumulated)
 
   if (remainingPercent < -EPSILON) {
-    return {
-      accumulated,
-      finalGrade,
-      evaluatedPercent,
-      neededGrade: null,
-      outcome: 'invalid',
-    }
+    return { accumulated, finalGrade, evaluatedPercent, neededGrade: null, outcome: 'invalid' }
   }
   if (remainingPercent <= EPSILON) {
     const outcome = finalGrade + EPSILON >= PASSING_GRADE ? 'passed' : 'failed'
-    return {
-      accumulated,
-      finalGrade,
-      evaluatedPercent,
-      neededGrade: null,
-      outcome,
-    }
+    return { accumulated, finalGrade, evaluatedPercent, neededGrade: null, outcome }
   }
 
   const neededGrade = Math.max(0, ((PASSING_THRESHOLD - accumulated) * 100) / remainingPercent)
