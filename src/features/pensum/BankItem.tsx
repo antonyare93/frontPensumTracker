@@ -19,7 +19,7 @@ export function BankItem({ bank, subjects }: Props) {
 
   const subjectMap = useMemo(() => indexByCode(subjects), [subjects])
 
-  const percent = percentOf(bank.credits_approved, bank.credits_required)
+  const required = bank.credits_required
 
   return (
     <div className="border border-gray-200 rounded-lg overflow-hidden">
@@ -27,10 +27,15 @@ export function BankItem({ bank, subjects }: Props) {
         <div className="mb-2 flex flex-col gap-1 sm:flex-row sm:items-center sm:justify-between">
           <h3 className="text-sm font-semibold text-foreground">{bank.name}</h3>
           <span className="text-xs tabular-nums text-muted-foreground">
-            {bank.credits_approved} / {bank.credits_required} créditos
+            {required === null
+              ? `${bank.credits_approved} créditos aprobados · mínimo no disponible`
+              : `${bank.credits_approved} / ${required} créditos`}
           </span>
         </div>
-        <ProgressBar percent={percent} />
+        {/* Sin mínimo conocido una barra mentiría sobre el avance. */}
+        {required === null ? null : (
+          <ProgressBar percent={percentOf(bank.credits_approved, required)} />
+        )}
       </div>
 
       <Button variant="ghost" onClick={() => setOpen(o => !o)} className="w-full">

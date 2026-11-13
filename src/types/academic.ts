@@ -17,7 +17,8 @@ export interface Subject {
 
 export interface ElectiveBank {
   name: string
-  credits_required: number
+  // null cuando el backend no tiene el mínimo oficial del banco para esta versión.
+  credits_required: number | null
   credits_approved: number
   subject_codes: string[]
 }
