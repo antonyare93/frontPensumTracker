@@ -148,7 +148,7 @@ describe('App', () => {
 
     expect(await screen.findByLabelText('Progreso: 34% aprobado')).toBeInTheDocument()
     expect(screen.getByText('Ingeniería de Sistemas')).toBeInTheDocument()
-    // En el pensum y en la calculadora de notas, porque está en curso.
+    // Solo en el pensum: la calculadora está en la pestaña Notas.
     expect(screen.getAllByText('Cálculo II')).toHaveLength(1)
   })
 
