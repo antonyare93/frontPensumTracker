@@ -21,7 +21,7 @@ export function ElectiveBanks({ banks, subjects, missing }: Props) {
           key={bank.name}
           bank={bank}
           subjects={subjects}
-          portal={bankPortalStatus(bank.name, missing)}
+          portal={bankPortalStatus(bank.name, bank.satisfied, missing)}
         />
       ))}
     </div>

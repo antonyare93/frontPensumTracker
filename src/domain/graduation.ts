@@ -1,16 +1,19 @@
 import type { MissingBank, MissingForGraduation } from '@/types/academic'
 
-// El portal solo lista los bancos que faltan: uno ausente está cumplido.
+// El portal solo lista los bancos que faltan, pero que no aparezca no prueba que
+// esté cumplido (énfasis, práctica). Ausente solo es "cumplido" si el back lo confirma.
 export type BankPortalStatus =
   { kind: 'unknown' } | { kind: 'done' } | { kind: 'missing'; bank: MissingBank }
 
 export function bankPortalStatus(
   name: string,
+  satisfied: boolean | null | undefined,
   missing: MissingForGraduation | undefined,
 ): BankPortalStatus {
   if (!missing) return { kind: 'unknown' }
   const bank = missing.banks.find(b => b.name === name)
-  return bank ? { kind: 'missing', bank } : { kind: 'done' }
+  if (bank) return { kind: 'missing', bank }
+  return satisfied === true ? { kind: 'done' } : { kind: 'unknown' }
 }
 
 function plural(n: number, one: string, many: string): string {

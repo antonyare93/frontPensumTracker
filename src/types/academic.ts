@@ -21,6 +21,8 @@ export interface ElectiveBank {
   credits_required: number | null
   credits_approved: number
   subject_codes: string[]
+  // Del back: llegó al mínimo o completó otro énfasis de su grupo. null si no hay mínimo.
+  satisfied?: boolean | null
 }
 
 // Matriculada que no está en el pensum de la versión elegida. La constancia no

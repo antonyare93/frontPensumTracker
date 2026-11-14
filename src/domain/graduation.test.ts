@@ -26,15 +26,24 @@ const missing: MissingForGraduation = { mandatory: [], banks: [practica, socio],
 
 describe('bankPortalStatus', () => {
   it('sin datos del portal no dice nada', () => {
-    expect(bankPortalStatus('SOCIO', undefined)).toEqual({ kind: 'unknown' })
+    expect(bankPortalStatus('SOCIO', true, undefined)).toEqual({ kind: 'unknown' })
   })
 
   it('un banco que el portal lista como faltante trae lo que falta', () => {
-    expect(bankPortalStatus('SOCIO', missing)).toEqual({ kind: 'missing', bank: socio })
+    expect(bankPortalStatus('SOCIO', true, missing)).toEqual({ kind: 'missing', bank: socio })
   })
 
-  it('un banco que el portal no lista está cumplido', () => {
-    expect(bankPortalStatus('ARQUITECTURA', missing)).toEqual({ kind: 'done' })
+  it('ausente del portal y cumplido según el back: cumplido', () => {
+    expect(bankPortalStatus('ARQUITECTURA', true, missing)).toEqual({ kind: 'done' })
+  })
+
+  it('ausente del portal pero sin el mínimo: no se afirma que esté cumplido', () => {
+    expect(bankPortalStatus('ENFASIS', false, missing)).toEqual({ kind: 'unknown' })
+  })
+
+  it('ausente del portal y sin mínimo conocido: tampoco', () => {
+    expect(bankPortalStatus('PRACTICA AUSENTE', null, missing)).toEqual({ kind: 'unknown' })
+    expect(bankPortalStatus('VIEJO', undefined, missing)).toEqual({ kind: 'unknown' })
   })
 })
 
