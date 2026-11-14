@@ -26,3 +26,13 @@ export function missingBankText(bank: MissingBank): string {
   const verb = bank.credits_missing === 1 ? 'falta' : 'faltan'
   return `Te ${verb} ${plural(bank.credits_missing, 'crédito', 'créditos')} (llevas ${bank.credits_approved} de ${bank.credits_required})`
 }
+
+// El back decide, pero si el portal aún lista pendientes no se felicita a nadie.
+export function isGraduated(
+  backend: boolean,
+  missing: MissingForGraduation | undefined,
+): boolean {
+  if (!backend) return false
+  if (!missing) return true
+  return missing.mandatory.length === 0 && missing.banks.length === 0
+}
