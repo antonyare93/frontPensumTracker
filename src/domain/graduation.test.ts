@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest'
 import type { MissingBank, MissingForGraduation } from '@/types/academic'
-import { bankPortalStatus, missingBankText } from './graduation'
+import { bankPortalStatus, isGraduated, missingBankText } from './graduation'
 
 const practica: MissingBank = {
   name: 'PRACTICA',
@@ -45,5 +45,28 @@ describe('missingBankText', () => {
 
   it('cuenta por créditos en los demás', () => {
     expect(missingBankText(socio)).toBe('Te faltan 3 créditos (llevas 8 de 11)')
+  })
+})
+
+describe('isGraduated', () => {
+  const nothing = { mandatory: [], banks: [], pending: [] }
+  const subject = { code: '1', name: 'X', credits: 3 }
+
+  it('no da por graduado si el portal lista obligatorias pendientes', () => {
+    expect(isGraduated(true, { ...nothing, mandatory: [subject] })).toBe(false)
+  })
+
+  it('no da por graduado si el portal lista bancos pendientes', () => {
+    const bank = {
+      name: 'B', credits_required: 3, credits_approved: 0, credits_missing: 3,
+      subjects_required: null, subjects_approved: null, subjects_missing: null, options: [],
+    }
+    expect(isGraduated(true, { ...nothing, banks: [bank] })).toBe(false)
+  })
+
+  it('respeta al back cuando el portal no lista nada o no respondió', () => {
+    expect(isGraduated(true, nothing)).toBe(true)
+    expect(isGraduated(true, undefined)).toBe(true)
+    expect(isGraduated(false, nothing)).toBe(false)
   })
 })

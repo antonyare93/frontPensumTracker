@@ -1,5 +1,6 @@
 import { useState } from 'react'
 import type { PartialRecord } from '@/domain/academic-record'
+import { isGraduated } from '@/domain/graduation'
 import { Alert } from '@/components/ui/Alert'
 import { Collapsible } from '@/components/ui/Collapsible'
 import { GradeCalculator } from '@/features/grades/GradeCalculator'
@@ -53,7 +54,7 @@ export function Dashboard({ data, error, onReset, onChangeVersion }: Props) {
         </Alert>
       ) : null}
 
-      {data.graduated ? (
+      {isGraduated(data.graduated ?? false, data.missing) ? (
         <Alert variant="success" className="mb-6">
           Completaste todos los créditos del plan. No tienes materias pendientes para el grado.
         </Alert>
